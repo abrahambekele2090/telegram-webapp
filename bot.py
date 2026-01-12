@@ -23,6 +23,7 @@ def main():
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+print("BOT_TOKEN value:", BOT_TOKEN)
 WEB_APP_URL = "https://abrahambekele2090.github.io/telegram-webapp/"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
