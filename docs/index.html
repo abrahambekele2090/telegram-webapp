@@ -2,168 +2,228 @@
 <html>
 <head>
 <meta charset="UTF-8">
+
+<!-- 🔁 CHANGE TITLE PER PROJECT -->
 <title>Secure Notes</title>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+/* ======================
+   🎨 THEME VARIABLES
+   (REUSABLE TEMPLATE)
+====================== */
 :root {
-  --bg:#fff;
-  --text:#111;
-  --border:#e5e5e5;
-  --primary:#2aabee;
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #666666;
+  --border: #e5e5e5;
+  --primary: #2aabee;
+  --radius: 14px;
 }
 
+/* ======================
+   BASE LAYOUT
+====================== */
 body {
-  margin:0;
-  background:var(--bg);
-  font-family:system-ui,-apple-system;
-  color:var(--text);
+  margin: 0;
+  background: var(--bg);
+  font-family: system-ui, -apple-system;
+  color: var(--text);
 }
 
 .app {
-  max-width:420px;
-  margin:auto;
-  padding:20px;
+  max-width: 420px;
+  margin: auto;
+  padding: 20px;
 }
 
-h1 { margin:0 0 6px; font-size:22px; }
-p { margin:0 0 16px; color:#666; font-size:14px; }
+/* ======================
+   TYPOGRAPHY
+====================== */
+h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
 
+p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ======================
+   INPUTS
+====================== */
 input, textarea {
-  width:100%;
-  padding:12px;
-  font-size:16px;
-  border-radius:12px;
-  border:1px solid var(--border);
-  box-sizing:border-box;
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
-textarea { height:110px; resize:none; }
+textarea {
+  height: 110px;
+  resize: none;
+}
 
+/* ======================
+   BUTTONS
+====================== */
 button {
-  width:100%;
-  padding:14px;
-  margin-top:12px;
-  border:none;
-  border-radius:12px;
-  background:var(--primary);
-  color:white;
-  font-size:16px;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: white;
+  font-size: 16px;
 }
 
+button.secondary {
+  background: #e0e0e0;
+  color: #000;
+}
+
+/* ======================
+   NOTES
+====================== */
 .note {
-  border:1px solid var(--border);
-  border-radius:12px;
-  padding:12px;
-  margin-top:12px;
-  background:#fafafa;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-top: 12px;
+  background: #fafafa;
 }
 
-.small { background:#ddd; color:#000; }
-.hidden { display:none; }
+.hidden { display: none; }
 </style>
 </head>
 
 <body>
 <div class="app">
 
-<!-- LOCK -->
+<!-- 🔐 LOCK SCREEN -->
 <div id="lock">
   <h1>🔐 Locked</h1>
-  <p>Enter PIN</p>
-  <input id="pinInput" type="password">
+  <p>Enter your PIN</p>
+  <input id="pinInput" type="password" autofocus>
   <button onclick="unlock()">Unlock</button>
 </div>
 
-<!-- APP -->
+<!-- 🗒 MAIN APP -->
 <div id="main" class="hidden">
   <h1>🗒 Notes</h1>
-  <input id="search" placeholder="Search..." oninput="render()">
+  <p>Your private notes</p>
+
+  <input id="search" placeholder="Search notes..." oninput="render()">
+
   <textarea id="text" placeholder="Write a note..."></textarea>
-  <button onclick="add()">➕ Add</button>
+  <button onclick="add()">➕ Add note</button>
+
   <div id="notes"></div>
-  <button class="small" onclick="backup()">📦 Backup</button>
-  <button class="small" onclick="restore()">♻ Restore</button>
+
+  <button class="secondary" onclick="backup()">📦 Backup</button>
 </div>
 
 </div>
 
 <script>
+/* ======================
+   TELEGRAM INIT
+====================== */
 const tg = Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-/* Dark mode */
+/* Dark mode sync */
 if (tg.colorScheme === "dark") {
-  document.documentElement.style.setProperty("--bg","#0e1621");
-  document.documentElement.style.setProperty("--text","#fff");
-  document.documentElement.style.setProperty("--border","#2a2a2a");
+  document.documentElement.style.setProperty("--bg", "#0e1621");
+  document.documentElement.style.setProperty("--text", "#ffffff");
+  document.documentElement.style.setProperty("--border", "#2a2a2a");
+  document.documentElement.style.setProperty("--muted", "#9aa0a6");
 }
 
-/* HASH */
-async function hash(text){
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
+/* ======================
+   SECURITY (PIN HASH)
+====================== */
+async function hash(text) {
+  const buf = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(text)
+  );
+  return [...new Uint8Array(buf)]
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-/* PIN */
-(async()=>{
-  if(!localStorage.getItem("pin")){
-    const p = prompt("Create PIN");
+(async () => {
+  if (!localStorage.getItem("pin")) {
+    const p = prompt("Create a PIN");
     localStorage.setItem("pin", await hash(p));
   }
 })();
 
-async function unlock(){
+async function unlock() {
   const h = await hash(pinInput.value);
-  if(h === localStorage.getItem("pin")){
+  if (h === localStorage.getItem("pin")) {
     lock.classList.add("hidden");
     main.classList.remove("hidden");
+    text.focus();
   }
 }
 
-/* NOTES */
+/* ======================
+   NOTES LOGIC
+====================== */
 let notes = JSON.parse(localStorage.getItem("notes") || "[]");
-function save(){ localStorage.setItem("notes",JSON.stringify(notes)); render(); }
 
-function add(){
-  if(!text.value.trim()) return;
-  notes.unshift({text:text.value});
-  text.value="";
+function save() {
+  localStorage.setItem("notes", JSON.stringify(notes));
+  render();
+}
+
+function add() {
+  if (!text.value.trim()) return;
+  notes.unshift({ text: text.value });
+  text.value = "";
   save();
 }
 
-function render(){
-  notesDiv.innerHTML="";
+function render() {
+  notesDiv.innerHTML = "";
   const q = search.value.toLowerCase();
-  notes.filter(n=>n.text.toLowerCase().includes(q)).forEach((n,i)=>{
-    const d=document.createElement("div");
-    d.className="note";
-    d.innerHTML=`${n.text}<button class="small" onclick="del(${i})">❌</button>`;
-    notesDiv.appendChild(d);
-  });
+
+  notes
+    .filter(n => n.text.toLowerCase().includes(q))
+    .forEach((n, i) => {
+      const d = document.createElement("div");
+      d.className = "note";
+      d.innerHTML = `
+        ${n.text}
+        <button class="secondary" onclick="del(${i})">❌ Delete</button>
+      `;
+      notesDiv.appendChild(d);
+    });
 }
 
-function del(i){ notes.splice(i,1); save(); }
+function del(i) {
+  notes.splice(i, 1);
+  save();
+}
 
-/* BACKUP */
-function backup(){
-  tg.sendData(JSON.stringify({event:"export",notes}));
+/* ======================
+   BACKUP
+====================== */
+function backup() {
+  tg.sendData(JSON.stringify({ event: "export", notes }));
   alert("Backup sent to bot");
 }
 
-/* RESTORE */
-function restore(){
-  const data = prompt("Paste backup JSON");
-  try{
-    notes = JSON.parse(data);
-    save();
-  }catch{
-    alert("Invalid backup");
-  }
-}
-
-const notesDiv=document.getElementById("notes");
+const notesDiv = document.getElementById("notes");
 render();
 </script>
 
