@@ -29,7 +29,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
         ]
     ])
-
     await update.message.reply_text(
         "Welcome 👋\nTap below to open your notes:",
         reply_markup=keyboard
@@ -37,20 +36,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def web_app_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = json.loads(update.message.web_app_data.data)
-
-    if data.get("event") == "save":
-        await update.message.reply_text("✅ Note saved")
-    elif data.get("event") == "export":
-        await update.message.reply_text("📦 Backup received")
+    await update.message.reply_text("✅ Data received")
 
 def main():
     app = ApplicationBuilder().token(BOT_TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(
-        MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler)
-    )
-
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_handler))
     print("🤖 Bot is running...")
     app.run_polling()
 
