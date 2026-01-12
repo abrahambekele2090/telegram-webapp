@@ -19,7 +19,7 @@ from telegram.ext import (
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-WEB_APP_URL = "https://YOUR_USERNAME.github.io/YOUR_REPO_NAME/"
+WEB_APP_URL = "https://abrahambekele2090.github.io/telegram-webapp/"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
