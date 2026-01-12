@@ -14,7 +14,11 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
-
+print("STEP 1: bot.py loaded")
+def main():
+    print("STEP 2: main() started")
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
+    print("STEP 3: Application built")
 # Load .env locally (Render ignores it and uses Env Vars)
 load_dotenv()
 
