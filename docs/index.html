@@ -2,141 +2,147 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Premium Telegram Web App</title>
+<title>Elite Telegram Web App</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
+:root {
+  --bg: #0e1621;
+  --card: rgba(255,255,255,0.12);
+  --text: #ffffff;
+  --accent: #2aabee;
+}
+
 body {
   margin: 0;
   height: 100vh;
-  background: linear-gradient(160deg, #0e1a2b, #162f4a);
+  background: var(--bg);
   display: flex;
   justify-content: center;
   align-items: center;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+  font-family: system-ui;
+  overflow: hidden;
+  transition: background 0.4s ease;
 }
 
 .app {
-  width: 92%;
+  width: 100%;
   max-width: 420px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.cards {
+  display: flex;
+  width: 300%;
+  transition: transform 0.45s cubic-bezier(.22,.61,.36,1);
+}
+
+.card {
+  width: 100%;
   padding: 28px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-  color: white;
-}
-
-.page {
-  display: none;
-  animation: slide 0.35s ease;
-}
-
-.page.active {
-  display: block;
+  box-sizing: border-box;
+  margin: 0 8px;
+  background: var(--card);
+  backdrop-filter: blur(22px);
+  border-radius: 30px;
+  color: var(--text);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.35);
 }
 
 h2 {
-  margin-bottom: 16px;
-}
-
-p {
-  opacity: 0.85;
+  margin-top: 0;
 }
 
 button {
   width: 100%;
   padding: 18px;
-  margin-top: 14px;
+  margin-top: 16px;
   font-size: 18px;
   border-radius: 18px;
   border: none;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  color: black;
+  background: var(--accent);
+  color: white;
   font-weight: 600;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 button:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-}
-
-@keyframes slide {
-  from {
-    opacity: 0;
-    transform: translateX(25px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 </style>
 </head>
 
 <body>
 <div class="app" id="app">
+  <div class="cards" id="cards">
 
-  <div class="page active" id="home">
-    <h2>🏠 Home</h2>
-    <p>Swipe or tap to navigate</p>
-    <button onclick="go('stats')">📊 Stats</button>
-    <button onclick="go('settings')">⚙️ Settings</button>
+    <div class="card">
+      <h2>🏠 Home</h2>
+      <button onclick="go(1)">📊 Stats</button>
+      <button onclick="go(2)">⚙️ Settings</button>
+    </div>
+
+    <div class="card">
+      <h2>📊 Stats</h2>
+      <button onclick="send('stats')">Notify Bot</button>
+      <button onclick="go(0)">⬅ Back</button>
+    </div>
+
+    <div class="card">
+      <h2>⚙️ Settings</h2>
+      <button onclick="send('settings')">Save</button>
+      <button onclick="go(0)">⬅ Back</button>
+    </div>
+
   </div>
-
-  <div class="page" id="stats">
-    <h2>📊 Stats</h2>
-    <p>Premium analytics here</p>
-    <button onclick="send('stats')">Notify Bot</button>
-  </div>
-
-  <div class="page" id="settings">
-    <h2>⚙️ Settings</h2>
-    <p>App preferences</p>
-    <button onclick="send('settings')">Save</button>
-  </div>
-
 </div>
 
 <script>
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-const pages = ["home", "stats", "settings"];
-let currentIndex = 0;
+// Theme sync
+if (tg.themeParams.bg_color) {
+  document.documentElement.style.setProperty("--bg", tg.themeParams.bg_color);
+}
+if (tg.themeParams.button_color) {
+  document.documentElement.style.setProperty("--accent", tg.themeParams.button_color);
+}
+if (tg.themeParams.text_color) {
+  document.documentElement.style.setProperty("--text", tg.themeParams.text_color);
+}
 
-function go(page) {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(page).classList.add("active");
-  currentIndex = pages.indexOf(page);
+// Navigation
+let index = 0;
+const cards = document.getElementById("cards");
+
+function go(i) {
+  index = i;
+  cards.style.transform = `translateX(-${index * 100}%)`;
+  tg.HapticFeedback.impactOccurred("soft");
 }
 
 function send(action) {
+  tg.HapticFeedback.impactOccurred("medium");
   tg.sendData(JSON.stringify({ action }));
 }
 
-// Swipe detection
+// Swipe
 let startX = 0;
 
-const app = document.getElementById("app");
-
-app.addEventListener("touchstart", e => {
+cards.addEventListener("touchstart", e => {
   startX = e.touches[0].clientX;
 });
 
-app.addEventListener("touchend", e => {
-  let endX = e.changedTouches[0].clientX;
-  let diff = startX - endX;
-
+cards.addEventListener("touchend", e => {
+  let diff = startX - e.changedTouches[0].clientX;
   if (Math.abs(diff) > 60) {
-    if (diff > 0 && currentIndex < pages.length - 1) {
-      go(pages[currentIndex + 1]);
-    } else if (diff < 0 && currentIndex > 0) {
-      go(pages[currentIndex - 1]);
-    }
+    if (diff > 0 && index < 2) go(index + 1);
+    if (diff < 0 && index > 0) go(index - 1);
   }
 });
 </script>
