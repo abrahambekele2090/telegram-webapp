@@ -14,18 +14,10 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
-import sys
-print("Python version:", sys.version)
-print("STEP 1: bot.py loaded")
-def main():
-    print("STEP 2: main() started")
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
-    print("STEP 3: Application built")
-# Load .env locally (Render ignores it and uses Env Vars)
+
 load_dotenv()
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-print("BOT_TOKEN value:", BOT_TOKEN)
 WEB_APP_URL = "https://abrahambekele2090.github.io/telegram-webapp/"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -39,7 +31,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ])
 
     await update.message.reply_text(
-        "Welcome 👋\nOpen your notes app below:",
+        "Welcome 👋\nTap below to open your notes:",
         reply_markup=keyboard
     )
 
