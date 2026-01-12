@@ -14,6 +14,8 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
+import sys
+print("Python version:", sys.version)
 print("STEP 1: bot.py loaded")
 def main():
     print("STEP 2: main() started")
