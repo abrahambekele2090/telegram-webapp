@@ -2,147 +2,126 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Elite Telegram Web App</title>
+<title>Ultimate Telegram App</title>
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
 :root {
-  --bg: #0e1621;
-  --card: rgba(255,255,255,0.12);
-  --text: #ffffff;
-  --accent: #2aabee;
+  --bg:#0e1621; --card:rgba(255,255,255,.12);
+  --text:#fff; --accent:#2aabee;
 }
 
 body {
-  margin: 0;
-  height: 100vh;
-  background: var(--bg);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: system-ui;
-  overflow: hidden;
-  transition: background 0.4s ease;
-}
-
-.app {
-  width: 100%;
-  max-width: 420px;
-  height: 100%;
-  display: flex;
-  align-items: center;
+  margin:0; height:100vh;
+  background:var(--bg);
+  font-family:system-ui;
+  display:flex; justify-content:center; align-items:center;
 }
 
 .cards {
-  display: flex;
-  width: 300%;
-  transition: transform 0.45s cubic-bezier(.22,.61,.36,1);
+  display:flex; width:400%;
+  transition:transform .45s cubic-bezier(.22,.61,.36,1);
 }
 
 .card {
-  width: 100%;
-  padding: 28px;
-  box-sizing: border-box;
-  margin: 0 8px;
-  background: var(--card);
-  backdrop-filter: blur(22px);
-  border-radius: 30px;
-  color: var(--text);
-  box-shadow: 0 30px 60px rgba(0,0,0,0.35);
-}
-
-h2 {
-  margin-top: 0;
+  width:100%; padding:26px;
+  margin:0 8px;
+  background:var(--card);
+  border-radius:28px;
+  backdrop-filter:blur(20px);
+  color:var(--text);
 }
 
 button {
-  width: 100%;
-  padding: 18px;
-  margin-top: 16px;
-  font-size: 18px;
-  border-radius: 18px;
-  border: none;
-  background: var(--accent);
-  color: white;
-  font-weight: 600;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-
-button:active {
-  transform: scale(0.95);
-  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  width:100%; padding:16px;
+  margin-top:14px;
+  border-radius:16px;
+  border:none;
+  background:var(--accent);
+  color:white; font-weight:600;
 }
 </style>
 </head>
 
 <body>
-<div class="app" id="app">
-  <div class="cards" id="cards">
+<div class="cards" id="cards">
 
-    <div class="card">
-      <h2>🏠 Home</h2>
-      <button onclick="go(1)">📊 Stats</button>
-      <button onclick="go(2)">⚙️ Settings</button>
-    </div>
+<!-- HOME -->
+<div class="card">
+  <h2>🏠 Home</h2>
+  <button onclick="go(1)">📊 Stats</button>
+  <button onclick="go(2)">⚙ Settings</button>
+</div>
 
-    <div class="card">
-      <h2>📊 Stats</h2>
-      <button onclick="send('stats')">Notify Bot</button>
-      <button onclick="go(0)">⬅ Back</button>
-    </div>
+<!-- STATS -->
+<div class="card">
+  <h2>📊 Analytics</h2>
+  <canvas id="chart"></canvas>
+  <button onclick="go(0)">⬅ Back</button>
+</div>
 
-    <div class="card">
-      <h2>⚙️ Settings</h2>
-      <button onclick="send('settings')">Save</button>
-      <button onclick="go(0)">⬅ Back</button>
-    </div>
+<!-- SETTINGS -->
+<div class="card">
+  <h2>⚙ Settings</h2>
+  <button onclick="save()">💾 Save</button>
+  <button onclick="go(0)">⬅ Back</button>
+</div>
 
-  </div>
+<!-- ADMIN -->
+<div class="card" id="admin">
+  <h2>🛡 Admin</h2>
+  <button onclick="admin()">Ping Bot</button>
+</div>
+
 </div>
 
 <script>
-const tg = window.Telegram.WebApp;
+const tg = Telegram.WebApp;
 tg.expand();
 
-// Theme sync
-if (tg.themeParams.bg_color) {
-  document.documentElement.style.setProperty("--bg", tg.themeParams.bg_color);
-}
-if (tg.themeParams.button_color) {
-  document.documentElement.style.setProperty("--accent", tg.themeParams.button_color);
-}
-if (tg.themeParams.text_color) {
-  document.documentElement.style.setProperty("--text", tg.themeParams.text_color);
-}
+// THEME SYNC
+Object.entries(tg.themeParams).forEach(([k,v])=>{
+  if(k.includes("bg")) document.documentElement.style.setProperty("--bg",v);
+  if(k.includes("button")) document.documentElement.style.setProperty("--accent",v);
+  if(k.includes("text")) document.documentElement.style.setProperty("--text",v);
+});
 
-// Navigation
-let index = 0;
-const cards = document.getElementById("cards");
+// NAV
+let index=0;
+const cards=document.getElementById("cards");
 
-function go(i) {
-  index = i;
-  cards.style.transform = `translateX(-${index * 100}%)`;
+function go(i){
+  index=i;
+  cards.style.transform=`translateX(-${i*100}%)`;
+  localStorage.setItem("page",i);
   tg.HapticFeedback.impactOccurred("soft");
 }
 
-function send(action) {
-  tg.HapticFeedback.impactOccurred("medium");
-  tg.sendData(JSON.stringify({ action }));
+// STORAGE
+function save(){
+  localStorage.setItem("saved","yes");
+  tg.sendData(JSON.stringify({action:"save_settings"}));
 }
 
-// Swipe
-let startX = 0;
+// ADMIN
+if(tg.initDataUnsafe.user?.id === 123456789){
+  document.getElementById("admin").style.display="block";
+}else{
+  document.getElementById("admin").style.display="none";
+}
 
-cards.addEventListener("touchstart", e => {
-  startX = e.touches[0].clientX;
-});
+function admin(){
+  tg.sendData(JSON.stringify({action:"admin_ping"}));
+}
 
-cards.addEventListener("touchend", e => {
-  let diff = startX - e.changedTouches[0].clientX;
-  if (Math.abs(diff) > 60) {
-    if (diff > 0 && index < 2) go(index + 1);
-    if (diff < 0 && index > 0) go(index - 1);
+// CHART
+new Chart(document.getElementById("chart"),{
+  type:"line",
+  data:{
+    labels:["Mon","Tue","Wed","Thu","Fri"],
+    datasets:[{data:[5,9,7,11,14], borderColor:tg.themeParams.button_color}]
   }
 });
 </script>
